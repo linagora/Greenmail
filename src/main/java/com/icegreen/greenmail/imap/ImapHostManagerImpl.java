@@ -311,7 +311,7 @@ public class ImapHostManagerImpl
             return USER_NAMESPACE + HIERARCHY_DELIMITER + userNamespace +
                     HIERARCHY_DELIMITER + INBOX_NAME;
         }
-        if (user.isAdmin() && mailboxName.equals(ALL)) {
+        if (user.isAdmin() && mailboxName.startsWith(ALL)) {
         	return USER_NAMESPACE + HIERARCHY_DELIMITER + ALL;
         }
 
