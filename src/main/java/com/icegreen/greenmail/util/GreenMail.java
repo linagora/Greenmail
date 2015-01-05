@@ -237,7 +237,7 @@ public class GreenMail {
         GreenMailUser user = managers.getUserManager().getUser(email);
         if (null == user) {
             try {
-                user = managers.getUserManager().createUser(email, login, password, admin);
+                user = createUser(email, login, password, admin);
             } catch (UserException e) {
                 throw new RuntimeException(e);
             }
@@ -245,6 +245,13 @@ public class GreenMail {
             user.setPassword(password);
         }
         return user;
+    }
+    
+    private GreenMailUser createUser(String email, String login, String password, boolean admin) throws UserException {
+    	if (admin) {
+            return managers.getUserManager().createAdmin(email, login, password);
+    	}
+        return managers.getUserManager().createUser(email, login, password);
     }
 
     /**
