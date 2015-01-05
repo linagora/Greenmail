@@ -49,7 +49,7 @@ public class ImapHostManagerImpl
 
     public List<SimpleStoredMessage> getAllMessages() {
         try {
-        	return getAllMessages(store.listMailboxes("*"));
+        	return getAllMessages(store.listMailboxes(ALL));
         } catch (FolderException e) {
             throw new RuntimeException(e);
         }
@@ -57,7 +57,7 @@ public class ImapHostManagerImpl
 
     public List<SimpleStoredMessage> getAllMessages(GreenMailUser user) {
         try {
-        	return getAllMessages(listMailboxes(user, "*"));
+        	return getAllMessages(listMailboxes(user, ALL));
         } catch (FolderException e) {
             throw new RuntimeException(e);
         }
