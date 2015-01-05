@@ -37,8 +37,15 @@ public class UserManager {
         return ret;
     }
 
+    public GreenMailUser createAdmin(String name, String login, String password) throws UserException {
+        GreenMailUser user = new UserImpl(name, login, password, true, imapHostManager);
+        user.create();
+        addUser(user);
+        return user;
+    }
+
     public GreenMailUser createUser(String name, String login, String password) throws UserException {
-        GreenMailUser user = new UserImpl(name, login, password, imapHostManager);
+        GreenMailUser user = new UserImpl(name, login, password, false, imapHostManager);
         user.create();
         addUser(user);
         return user;

@@ -226,14 +226,18 @@ public class GreenMail {
      * @param password
      */
     public GreenMailUser setUser(String email, String password) {
-        return setUser(email, email, password);
+        return setUser(email, email, password, false);
     }
 
-    public GreenMailUser setUser(String email, String login, String password) {
+    public GreenMailUser setAdminUser(String email, String password) {
+        return setUser(email, email, password, true);
+    }
+
+    public GreenMailUser setUser(String email, String login, String password, boolean admin) {
         GreenMailUser user = managers.getUserManager().getUser(email);
         if (null == user) {
             try {
-                user = managers.getUserManager().createUser(email, login, password);
+                user = createUser(email, login, password, admin);
             } catch (UserException e) {
                 throw new RuntimeException(e);
             }
@@ -241,6 +245,13 @@ public class GreenMail {
             user.setPassword(password);
         }
         return user;
+    }
+    
+    private GreenMailUser createUser(String email, String login, String password, boolean admin) throws UserException {
+    	if (admin) {
+            return managers.getUserManager().createAdmin(email, login, password);
+    	}
+        return managers.getUserManager().createUser(email, login, password);
     }
 
     /**
@@ -252,7 +263,7 @@ public class GreenMail {
         for (Iterator<Object> it = users.keySet().iterator(); it.hasNext();) {
             String email = (String) it.next();
             String password = users.getProperty(email);
-            setUser(email, email, password);
+            setUser(email, email, password, false);
         }
     }
 
