@@ -17,6 +17,7 @@ import com.icegreen.greenmail.imap.commands.search.After;
 import com.icegreen.greenmail.imap.commands.search.Before;
 import com.icegreen.greenmail.imap.commands.search.Criteria;
 import com.icegreen.greenmail.imap.commands.search.Deleted;
+import com.icegreen.greenmail.imap.commands.search.Keyword;
 import com.icegreen.greenmail.imap.commands.search.Not;
 import com.icegreen.greenmail.imap.commands.search.Or;
 import com.icegreen.greenmail.imap.commands.search.Uid;
@@ -152,6 +153,10 @@ class SearchCommand extends SelectedStateCommand implements UidEnabledCommand {
             	return new After(date);
             } else if (criteria.equals("UID")) {
             	return new Uid(readNextToken(request));
+            } else if (criteria.equals("KEYWORD")) {
+            	return new Keyword(readNextToken(request));
+            } else if (criteria.equals("UNKEYWORD")) {
+            	return new Not(new Keyword(readNextToken(request)));
             }
             throw new ProtocolException("criteria not supported : "  + criteria);
         }
