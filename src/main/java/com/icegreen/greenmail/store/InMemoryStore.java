@@ -117,12 +117,6 @@ public class InMemoryStore
         int starIndex = searchPattern.indexOf('*');
         int percentIndex = searchPattern.indexOf('%');
 
-        // We only handle wildcard at the end of the search pattern.
-        if ((starIndex > -1 && starIndex < searchPattern.length() - 1) ||
-                (percentIndex > -1 && percentIndex < searchPattern.length() - 1)) {
-            throw new FolderException("WIldcard characters are only handled as the last character of a list argument.");
-        }
-
         ArrayList<MailFolder> mailboxes = new ArrayList<MailFolder>();
         if (starIndex != -1 || percentIndex != -1) {
             int lastDot = searchPattern.lastIndexOf(HIERARCHY_DELIMITER);
@@ -141,13 +135,33 @@ public class InMemoryStore
                 Iterator<HierarchicalFolder> children = new ArrayList<HierarchicalFolder>(parent.getChildren()).iterator();
                 while (children.hasNext()) {
                     HierarchicalFolder child = children.next();
-                    if (child.getName().startsWith(matchPattern)) {
+                    String childName = child.getName();
+                    if (childName.startsWith(matchPattern)) {
                         mailboxes.add(child);
 
                         if (starIndex != -1) {
                             addAllChildren(child, mailboxes);
                         }
+                    } else if (matchPattern.startsWith(ALL)) {
+                        if (childName.startsWith(matchPattern.substring(1))) {
+
+                            if (percentIndex != -1 && (parentName.length() + 1 + matchPattern.length()) == percentIndex) {
+                                if (childName.substring(matchPattern.length() - 1).contains("/")) {
+                                    continue;
+                                }
+                            }
+                            if (!childName.contains("@") || child.children.isEmpty()) {
+                                mailboxes.add(child);
+                            }
+
+                            if (starIndex != -1) {
+                                addAllChildren(child, mailboxes);
+                            }
+                        } else {
+                            mailboxes.addAll(listMailboxes(child.getFullName() + HIERARCHY_DELIMITER_CHAR + matchPattern + ALL));
+                        }
                     }
+
                 }
             }
 

@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Collection;
 
 import javax.mail.BodyPart;
 import javax.mail.Message;
@@ -17,6 +18,8 @@ import javax.mail.internet.MimeMultipart;
 import org.junit.After;
 import org.junit.Test;
 
+import com.icegreen.greenmail.store.MailFolder;
+import com.icegreen.greenmail.user.GreenMailUser;
 import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.GreenMailUtil;
 import com.icegreen.greenmail.util.Retriever;
@@ -138,5 +141,67 @@ public class ImapServerTest {
             assertEquals(i, gif[i]);
         }
         retriever.logout();
+    }
+
+    @Test
+    public void listMailboxesShouldWorkWhenPatternIsInTheMiddleOfMailboxName() throws Exception {
+        greenMail = new GreenMail(ServerSetupTest.SMTP_IMAP);
+        greenMail.start();
+        
+		GreenMailUser admin = greenMail.setAdminUser("admin", "admin");
+		greenMail.getManagers().getImapHostManager().deleteMailbox(admin, "INBOX");
+		greenMail.getManagers().getImapHostManager().createMailbox(admin, "user/admin@mydomain");
+		
+		GreenMailUser usera = greenMail.setAdminUser("usera", "usera");
+		greenMail.getManagers().getImapHostManager().deleteMailbox(usera, "INBOX");
+		greenMail.getManagers().getImapHostManager().createMailbox(usera, "user/usera@mydomain");
+		greenMail.getManagers().getImapHostManager().createMailbox(usera, "user/usera/folder@mydomain");
+		
+		GreenMailUser userb = greenMail.setAdminUser("usera-test", "usera");
+		greenMail.getManagers().getImapHostManager().deleteMailbox(userb, "INBOX");
+		greenMail.getManagers().getImapHostManager().createMailbox(userb, "user/usera-test@mydomain");
+		
+		Collection<MailFolder> listMailboxes = greenMail.getManagers().getImapHostManager().listMailboxes(admin, "*user/usera/*");
+		assertEquals(listMailboxes.size(), 1);
+    }
+
+    @Test
+    public void listMailboxesShouldWorkWhenPatternEndsWithPercent() throws Exception {
+        greenMail = new GreenMail(ServerSetupTest.SMTP_IMAP);
+        greenMail.start();
+        
+		GreenMailUser admin = greenMail.setAdminUser("admin", "admin");
+		greenMail.getManagers().getImapHostManager().deleteMailbox(admin, "INBOX");
+		greenMail.getManagers().getImapHostManager().createMailbox(admin, "user/admin@mydomain");
+		
+		GreenMailUser usera = greenMail.setAdminUser("usera", "usera");
+		greenMail.getManagers().getImapHostManager().deleteMailbox(usera, "INBOX");
+		greenMail.getManagers().getImapHostManager().createMailbox(usera, "user/usera@mydomain");
+		greenMail.getManagers().getImapHostManager().createMailbox(usera, "user/usera/folder@mydomain");
+		
+		GreenMailUser userb = greenMail.setAdminUser("usera-test", "usera");
+		greenMail.getManagers().getImapHostManager().deleteMailbox(userb, "INBOX");
+		greenMail.getManagers().getImapHostManager().createMailbox(userb, "user/usera-test@mydomain");
+		
+		Collection<MailFolder> listMailboxes = greenMail.getManagers().getImapHostManager().listMailboxes(admin, "*user/%");
+		assertEquals(listMailboxes.size(), 3);
+    }
+
+    @Test
+    public void listMailboxesShouldWorkWhenDomainsContainsDot() throws Exception {
+        greenMail = new GreenMail(ServerSetupTest.SMTP_IMAP);
+        greenMail.start();
+        
+		GreenMailUser admin = greenMail.setAdminUser("admin", "admin");
+		greenMail.getManagers().getImapHostManager().deleteMailbox(admin, "INBOX");
+		greenMail.getManagers().getImapHostManager().createMailbox(admin, "user/admin@mydomain.org");
+		
+		GreenMailUser usera = greenMail.setAdminUser("usera", "usera");
+		greenMail.getManagers().getImapHostManager().deleteMailbox(usera, "INBOX");
+		greenMail.getManagers().getImapHostManager().createMailbox(usera, "user/usera@mydomain.org");
+		greenMail.getManagers().getImapHostManager().createMailbox(usera, "user/usera/folder@mydomain.org");
+		
+		Collection<MailFolder> listMailboxes = greenMail.getManagers().getImapHostManager().listMailboxes(admin, "*user/usera/*");
+		assertEquals(listMailboxes.size(), 1);
     }
 }
