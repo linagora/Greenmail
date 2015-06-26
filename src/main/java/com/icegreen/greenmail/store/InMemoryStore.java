@@ -112,13 +112,15 @@ public class InMemoryStore
     /**
      * @see com.icegreen.greenmail.store.Store#listMailboxes
      */
-    public Collection<MailFolder> listMailboxes(String searchPattern)
-            throws FolderException {
+    public Collection<MailFolder> listMailboxes(String searchPattern) throws FolderException {
         int starIndex = searchPattern.indexOf('*');
+        boolean hasStar = starIndex != -1;
+        
         int percentIndex = searchPattern.indexOf('%');
+        boolean hasPercent = percentIndex != -1;
 
         ArrayList<MailFolder> mailboxes = new ArrayList<MailFolder>();
-        if (starIndex != -1 || percentIndex != -1) {
+        if (hasStar || hasPercent) {
             int lastDot = searchPattern.lastIndexOf(HIERARCHY_DELIMITER);
             String parentName;
             if (lastDot < 0) {
@@ -139,14 +141,14 @@ public class InMemoryStore
                     if (childName.startsWith(matchPattern)) {
                         mailboxes.add(child);
 
-                        if (starIndex != -1) {
+                        if (hasStar) {
                             addAllChildren(child, mailboxes);
                         }
                     } else if (matchPattern.startsWith(ALL)) {
                         if (childName.startsWith(matchPattern.substring(1))) {
 
-                            if (percentIndex != -1 && (parentName.length() + 1 + matchPattern.length()) == percentIndex) {
-                                if (childName.substring(matchPattern.length() - 1).contains("/")) {
+                            if (hasPercent && isPercentAtTheEnd(percentIndex, parentName, matchPattern)) {
+                                if (hasSubfolder(childName, matchPattern)) {
                                     continue;
                                 }
                             }
@@ -154,7 +156,7 @@ public class InMemoryStore
                                 mailboxes.add(child);
                             }
 
-                            if (starIndex != -1) {
+                            if (hasStar) {
                                 addAllChildren(child, mailboxes);
                             }
                         } else {
@@ -173,6 +175,15 @@ public class InMemoryStore
         }
 
         return mailboxes;
+    }
+
+    private boolean isPercentAtTheEnd(int percentIndex, String parentName, String matchPattern) {
+        // + 1 is for DOT separator
+        return (parentName.length() + 1 + matchPattern.length()) == percentIndex;
+    }
+
+    private boolean hasSubfolder(String childName, String matchPattern) {
+        return childName.substring(matchPattern.length() - 1).contains("/");
     }
 
     private void addAllChildren(HierarchicalFolder mailbox, Collection<MailFolder> mailboxes) {

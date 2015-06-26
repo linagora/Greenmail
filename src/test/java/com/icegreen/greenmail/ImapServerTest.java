@@ -161,8 +161,8 @@ public class ImapServerTest {
 		greenMail.getManagers().getImapHostManager().deleteMailbox(userb, "INBOX");
 		greenMail.getManagers().getImapHostManager().createMailbox(userb, "user/usera-test@mydomain");
 		
-		Collection<MailFolder> listMailboxes = greenMail.getManagers().getImapHostManager().listMailboxes(admin, "*user/usera/*");
-		assertEquals(listMailboxes.size(), 1);
+		Collection<MailFolder> listMailboxes = greenMail.getManagers().getImapHostManager().listMailboxes(admin, "*user/usera*");
+		assertEquals(listMailboxes.size(), 3);
     }
 
     @Test
