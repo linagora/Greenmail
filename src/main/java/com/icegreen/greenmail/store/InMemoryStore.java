@@ -112,19 +112,15 @@ public class InMemoryStore
     /**
      * @see com.icegreen.greenmail.store.Store#listMailboxes
      */
-    public Collection<MailFolder> listMailboxes(String searchPattern)
-            throws FolderException {
+    public Collection<MailFolder> listMailboxes(String searchPattern) throws FolderException {
         int starIndex = searchPattern.indexOf('*');
+        boolean hasStar = starIndex != -1;
+        
         int percentIndex = searchPattern.indexOf('%');
-
-        // We only handle wildcard at the end of the search pattern.
-        if ((starIndex > -1 && starIndex < searchPattern.length() - 1) ||
-                (percentIndex > -1 && percentIndex < searchPattern.length() - 1)) {
-            throw new FolderException("WIldcard characters are only handled as the last character of a list argument.");
-        }
+        boolean hasPercent = percentIndex != -1;
 
         ArrayList<MailFolder> mailboxes = new ArrayList<MailFolder>();
-        if (starIndex != -1 || percentIndex != -1) {
+        if (hasStar || hasPercent) {
             int lastDot = searchPattern.lastIndexOf(HIERARCHY_DELIMITER);
             String parentName;
             if (lastDot < 0) {
@@ -141,13 +137,33 @@ public class InMemoryStore
                 Iterator<HierarchicalFolder> children = new ArrayList<HierarchicalFolder>(parent.getChildren()).iterator();
                 while (children.hasNext()) {
                     HierarchicalFolder child = children.next();
-                    if (child.getName().startsWith(matchPattern)) {
+                    String childName = child.getName();
+                    if (childName.startsWith(matchPattern)) {
                         mailboxes.add(child);
 
-                        if (starIndex != -1) {
+                        if (hasStar) {
                             addAllChildren(child, mailboxes);
                         }
+                    } else if (matchPattern.startsWith(ALL)) {
+                        if (childName.startsWith(matchPattern.substring(1))) {
+
+                            if (hasPercent && isPercentAtTheEnd(percentIndex, parentName, matchPattern)) {
+                                if (hasSubfolder(childName, matchPattern)) {
+                                    continue;
+                                }
+                            }
+                            if (!childName.contains("@") || child.children.isEmpty()) {
+                                mailboxes.add(child);
+                            }
+
+                            if (hasStar) {
+                                addAllChildren(child, mailboxes);
+                            }
+                        } else {
+                            mailboxes.addAll(listMailboxes(child.getFullName() + HIERARCHY_DELIMITER_CHAR + matchPattern + ALL));
+                        }
                     }
+
                 }
             }
 
@@ -159,6 +175,15 @@ public class InMemoryStore
         }
 
         return mailboxes;
+    }
+
+    private boolean isPercentAtTheEnd(int percentIndex, String parentName, String matchPattern) {
+        // + 1 is for DOT separator
+        return (parentName.length() + 1 + matchPattern.length()) == percentIndex;
+    }
+
+    private boolean hasSubfolder(String childName, String matchPattern) {
+        return childName.substring(matchPattern.length() - 1).contains("/");
     }
 
     private void addAllChildren(HierarchicalFolder mailbox, Collection<MailFolder> mailboxes) {

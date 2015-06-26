@@ -12,6 +12,7 @@ import com.icegreen.greenmail.imap.ImapSession;
 import com.icegreen.greenmail.imap.ProtocolException;
 import com.icegreen.greenmail.store.FolderException;
 import com.icegreen.greenmail.store.MailFolder;
+import com.icegreen.greenmail.user.GreenMailUser;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,8 +94,14 @@ class ListCommand extends AuthenticatedStateCommand {
             mailboxes = doList(session, searchPattern);
         }
 
-        String personalNamespace = USER_NAMESPACE + HIERARCHY_DELIMITER_CHAR +
-                session.getUser().getQualifiedMailboxName() + HIERARCHY_DELIMITER_CHAR;
+        String personalNamespace;
+        GreenMailUser user = session.getUser();
+        if (!user.isAdmin()) {
+			personalNamespace = USER_NAMESPACE + HIERARCHY_DELIMITER_CHAR +
+	                user.getQualifiedMailboxName() + HIERARCHY_DELIMITER_CHAR;
+        } else {
+			personalNamespace = USER_NAMESPACE + HIERARCHY_DELIMITER_CHAR;
+        }
         int prefixLength = personalNamespace.length();
 
         Iterator<MailFolder> iterator = mailboxes.iterator();
@@ -147,10 +154,6 @@ class ListCommand extends AuthenticatedStateCommand {
         if (referenceName.endsWith(HIERARCHY_DELIMITER)) {
             if (buffer.charAt(0) == HIERARCHY_DELIMITER_CHAR) {
                 buffer.deleteCharAt(0);
-            }
-        } else {
-            if ((buffer.charAt(0) != HIERARCHY_DELIMITER_CHAR) && (referenceName.length() != 0)) {
-                buffer.insert(0, HIERARCHY_DELIMITER_CHAR);
             }
         }
 
